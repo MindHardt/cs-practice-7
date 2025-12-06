@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace App;
 
 /// <summary>
@@ -6,28 +8,43 @@ namespace App;
 public static class Input
 {
     /// <summary>
-    /// Считывает от пользователя URL файлов из интернета.
+    /// Считывает от пользователя URL файлов из интернета и валидирует их через IsValidUrl().
     /// </summary>
+    /// <returns>Массив ссылок</returns>
     public static string[] GetUrls()
     {
-        string[] result = [];
-        var valid = false;
-        while (valid is false)
+        string[] result;
+        while (true)
         {
-            Console.Write("Введите нужные URL через пробел: ");
-            result = Console.ReadLine()!.Split(' ');
-            valid = result.Any(x => IsValidUrl(x) is true);
-            if (valid is false)
+            Console.Write("\nВведите нужные URL через пробел: "); 
+            result = Console.ReadLine()!.Split();
+            var valid = result.Any(IsValidUrl);
+            if (!valid)
             {
                 Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
+                continue;
             }
-        }
 
+            break;
+        }
         return result;
     }
-
-    private static bool IsValidUrl(string url) => url.StartsWith("https://");
     
+    /// <summary>
+    /// Проверяет, что строка валидна как url и возвращает bool
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns>bool</returns>
+    private static bool IsValidUrl(string str)
+    {
+        string strRegex = @"((http|https)://)(www.)?" +
+                          "[a-zA-Z0-9@:%._\\+~#?&//=]" +
+                          "{2,256}\\.[a-z]" +
+                          "{2,6}\\b([-a-zA-Z0-9@:%" +
+                          "._\\+~#?&//=]*)";
+        Regex re = new Regex(strRegex);
+        return re.IsMatch(str);
+    }
     
     /// <summary>
     /// Считывает от пользователя путь до файла с результатом.
@@ -40,7 +57,7 @@ public static class Input
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
-                if (file.Exists && (!ChooseToOverwrite(file)))
+                if (file.Exists && (!ChooseToOverwrite()))
                         GetOutputFile();
                 
                 return file;
@@ -51,13 +68,16 @@ public static class Input
             }
         }
     }
-
-    private static bool ChooseToOverwrite(FileInfo file)
+    /// <summary>
+    /// Спрашивает пользователя хочет ли он перезаписать файл
+    /// </summary>
+    /// <returns>Согласие/несогласие на перезапись файла</returns>
+    private static bool ChooseToOverwrite()
     {
         Console.Write("Do you want to overwrite file? [y/n] ");
         var pressedKey = Console.ReadKey(true);
         while (pressedKey.Key is not (ConsoleKey.Y or ConsoleKey.N))
-            ChooseToOverwrite(file);
+            ChooseToOverwrite();
         return pressedKey.Key == ConsoleKey.Y;
     }
 }
