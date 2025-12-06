@@ -36,12 +36,13 @@ public static class Input
     {
         while (true)
         {
-            Console.WriteLine("Введите путь до файла с результатом: ");
+            Console.Write("\nВведите путь до файла с результатом: ");
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
-                if (!ChooseToOverwrite(file))
-                    GetOutputFile();
+                if (file.Exists && (!ChooseToOverwrite(file)))
+                        GetOutputFile();
+                
                 return file;
             }
             catch
