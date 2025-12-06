@@ -36,10 +36,12 @@ public static class Input
     {
         while (true)
         {
-            Console.Write("Введите путь до файла с результатом: ");
+            Console.WriteLine("Введите путь до файла с результатом: ");
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
+                if (!ChooseToOverwrite(file))
+                    GetOutputFile();
                 return file;
             }
             catch
@@ -47,5 +49,14 @@ public static class Input
                 Console.WriteLine("Произошла ошибка, вероятно вы ввели некорректный путь. Попробуйте ещё раз.");
             }
         }
+    }
+
+    private static bool ChooseToOverwrite(FileInfo file)
+    {
+        Console.Write("Do you want to overwrite file? [y/n] ");
+        var pressedKey = Console.ReadKey(true);
+        while (pressedKey.Key is not (ConsoleKey.Y or ConsoleKey.N))
+            ChooseToOverwrite(file);
+        return pressedKey.Key == ConsoleKey.Y;
     }
 }
