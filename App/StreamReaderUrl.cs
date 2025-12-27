@@ -4,14 +4,14 @@ public class StreamReaderUrl
 {
     private StreamReader _reader;
 
-    public StreamReaderUrl(ref HttpClient http, string url)
+    public StreamReaderUrl(HttpClient http, string url)
     {
         _reader = new StreamReader(http.GetStreamAsync(url).GetAwaiter().GetResult());
     }
 
-    public string ReadLine()
+    async public Task<string> ReadLine()
     {
-        string line = _reader.ReadLine();
+        string line = await _reader.ReadLineAsync();
         if (line != null)
         {
             return line;
