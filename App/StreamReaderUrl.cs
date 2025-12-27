@@ -9,7 +9,7 @@ public class StreamReaderUrl
         _reader = new StreamReader(http.GetStreamAsync(url).GetAwaiter().GetResult());
     }
 
-    async public Task<string> ReadLine()
+    public async Task<string> ReadLine()
     {
         string line = await _reader.ReadLineAsync();
         if (line != null)

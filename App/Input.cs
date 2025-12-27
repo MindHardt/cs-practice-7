@@ -12,21 +12,38 @@ public static class Input
     {
         string[] result = [];
         var valid = false;
-        while (valid is false)
+        
+        Console.Write("Введите нужные URL через пробел: ");
+        result = Console.ReadLine()!.Split(' ');
+
+        var validResult = result.Where(x => IsValidUrl(x));
+
+        if (validResult.Count() == 0)
         {
-            Console.Write("Введите нужные URL через пробел: ");
-            result = Console.ReadLine()!.Split(' ');
-            valid = result.All(x => IsValidUri(x));
-            if (valid is false)
-            {
-                Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
-            }
+            Console.Clear();
+            Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
+            return GetUrls();
         }
 
-        return result;
+        return validResult.ToArray();
+        
+        
+        
+        // while (valid is false)
+        // {
+        //     Console.Write("Введите нужные URL через пробел: ");
+        //     result = Console.ReadLine()!.Split(' ');
+        //     valid = result.All(x => IsValidUrl(x));
+        //     if (valid is false)
+        //     {
+        //         Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
+        //     }
+        // }
+        //
+        // return result;
     }
 
-    private static bool IsValidUri(string uri) => uri.StartsWith("https://");
+    private static bool IsValidUrl(string uri) => uri.StartsWith("https://");
     
     
     /// <summary>
@@ -40,6 +57,7 @@ public static class Input
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
+                Rewrite(file);
                 return file;
             }
             catch
@@ -48,4 +66,28 @@ public static class Input
             }
         }
     }
+    
+    private static void Rewrite(FileInfo file)
+    {
+        if (File.Exists(file.FullName))
+        {
+            Console.Write($"файл {file.Name} уже существует, перезаписать? y/n: ");
+
+            char answer = Console.ReadLine()!.ToLower()[0];
+            
+            if (answer == 'y')
+            {
+                File.Delete(file.FullName);
+                using (File.Create(file.FullName)) { }
+                return;
+            }
+            if (answer == 'n')
+            {
+                System.Environment.Exit(0);
+                return;
+            }
+            throw new Exception("неверный ввод");
+        }
+    }
+    
 }
