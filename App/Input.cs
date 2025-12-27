@@ -8,7 +8,7 @@ public static class Input
     /// <summary>
     /// Считывает от пользователя URL файлов из интернета.
     /// </summary>
-    public static string[] GetUris()
+    public static string[] GetUrls()
     {
         string[] result = [];
         var valid = false;
@@ -16,7 +16,7 @@ public static class Input
         {
             Console.Write("Введите нужные URL через пробел: ");
             result = Console.ReadLine()!.Split(' ');
-            valid = result.Any(x => IsValidUri(x) is false);
+            valid = result.All(x => IsValidUri(x));
             if (valid is false)
             {
                 Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
