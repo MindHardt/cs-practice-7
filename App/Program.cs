@@ -4,17 +4,20 @@ var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
 
-var urls = Input.GetUrls();
-var dest = Input.GetOutputFile();
+// var urls = Input.GetUrls();
+// var dest = Input.GetOutputFile();
+//
+// var destStream = dest.OpenWrite();
 
+
+
+var urls = Debug.Urls.Split(' ');
+var dest = Debug.GetOutFileName();
 var destStream = dest.OpenWrite();
 
 
 Console.CancelKeyPress += (_,_) => File.Delete(dest.FullName);
 
-// var urls = Debug.Urls.Split(' ');
-// var dest = Debug.GetOutFileName();
-// var destStream = dest.OpenWrite();
 
 using HttpClient client = new HttpClient();
 

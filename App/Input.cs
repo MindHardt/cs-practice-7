@@ -10,40 +10,22 @@ public static class Input
     /// </summary>
     public static string[] GetUrls()
     {
-        string[] result = [];
-        var valid = false;
-        
         Console.Write("Введите нужные URL через пробел: ");
-        result = Console.ReadLine()!.Split(' ');
+        string[] result = Console.ReadLine()!.Split(' ');
 
-        var validResult = result.Where(x => IsValidUrl(x));
+        var validResult = result.Where(x => IsValidUrl(x)).ToArray();
 
-        if (validResult.Count() == 0)
+        if (validResult.Length == 0)
         {
             Console.Clear();
             Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
             return GetUrls();
         }
 
-        return validResult.ToArray();
-        
-        
-        
-        // while (valid is false)
-        // {
-        //     Console.Write("Введите нужные URL через пробел: ");
-        //     result = Console.ReadLine()!.Split(' ');
-        //     valid = result.All(x => IsValidUrl(x));
-        //     if (valid is false)
-        //     {
-        //         Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
-        //     }
-        // }
-        //
-        // return result;
+        return validResult;
     }
 
-    private static bool IsValidUrl(string uri) => uri.StartsWith("https://");
+    private static bool IsValidUrl(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out _);
     
     
     /// <summary>
@@ -73,12 +55,11 @@ public static class Input
         {
             Console.Write($"файл {file.Name} уже существует, перезаписать? y/n: ");
 
-            char answer = Console.ReadLine()!.ToLower()[0];
+            char answer = Console.ReadKey().KeyChar;
             
             if (answer == 'y')
             {
-                File.Delete(file.FullName);
-                using (File.Create(file.FullName)) { }
+                File.WriteAllText(file.FullName, "");
                 return;
             }
             if (answer == 'n')
