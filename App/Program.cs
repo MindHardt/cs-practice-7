@@ -3,15 +3,39 @@
 var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
-var uris = Input.GetUris();
+
+var urls = Input.GetUrls();
 var dest = Input.GetOutputFile();
+
 var destStream = dest.OpenWrite();
 
-await Parallel.ForEachAsync(uris, cts.Token, async (uri, ct) =>
+
+
+
+
+Console.CancelKeyPress += (_,_) => File.Delete(dest.FullName);
+
+
+using HttpClient client = new HttpClient();
+
+var writerOut = new StreamWriter(destStream);
+
+
+var readers = new StreamReader[urls.Length];
+
+await Parallel.ForAsync(0, urls.Length, async (i, cts) =>
 {
-    using var http = new HttpClient();
-    await using var content = await http.GetStreamAsync(uri, ct);
-    await content.CopyToAsync(destStream, ct);
+    readers[i] = new StreamReader(await client.GetStreamAsync(urls[i]));
 });
 
-await destStream.DisposeAsync();
+
+await Parallel.ForEachAsync(readers, async (reader, cts) =>
+{
+    await writerOut.WriteAsync(await reader.ReadToEndAsync());
+});
+
+foreach (var reader in readers)
+{
+    reader.Dispose();
+}
+await writerOut.DisposeAsync();

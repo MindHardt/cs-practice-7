@@ -8,25 +8,24 @@ public static class Input
     /// <summary>
     /// Считывает от пользователя URL файлов из интернета.
     /// </summary>
-    public static string[] GetUris()
+    public static string[] GetUrls()
     {
-        string[] result = [];
-        var valid = false;
-        while (valid is false)
+        Console.Write("Введите нужные URL через пробел: ");
+        string[] result = Console.ReadLine()!.Split(' ');
+
+        var validResult = result.Where(x => IsValidUrl(x)).ToArray();
+
+        if (validResult.Length == 0)
         {
-            Console.Write("Введите нужные URL через пробел: ");
-            result = Console.ReadLine()!.Split(' ');
-            valid = result.Any(x => IsValidUri(x) is false);
-            if (valid is false)
-            {
-                Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
-            }
+            Console.Clear();
+            Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
+            return GetUrls();
         }
 
-        return result;
+        return validResult;
     }
 
-    private static bool IsValidUri(string uri) => uri.StartsWith("https://");
+    private static bool IsValidUrl(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out _);
     
     
     /// <summary>
@@ -40,6 +39,7 @@ public static class Input
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
+                Rewrite(file);
                 return file;
             }
             catch
@@ -48,4 +48,27 @@ public static class Input
             }
         }
     }
+    
+    private static void Rewrite(FileInfo file)
+    {
+        if (File.Exists(file.FullName))
+        {
+            Console.Write($"файл {file.Name} уже существует, перезаписать? y/n: ");
+
+            char answer = Console.ReadKey().KeyChar;
+            
+            if (answer == 'y')
+            {
+                File.WriteAllText(file.FullName, "");
+                return;
+            }
+            if (answer == 'n')
+            {
+                System.Environment.Exit(0);
+                return;
+            }
+            throw new Exception("неверный ввод");
+        }
+    }
+    
 }
