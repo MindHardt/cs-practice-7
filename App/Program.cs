@@ -4,16 +4,13 @@ var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
 
-// var urls = Input.GetUrls();
-// var dest = Input.GetOutputFile();
-//
-// var destStream = dest.OpenWrite();
+var urls = Input.GetUrls();
+var dest = Input.GetOutputFile();
 
-
-
-var urls = Debug.Urls.Split(' ');
-var dest = Debug.GetOutFileName();
 var destStream = dest.OpenWrite();
+
+
+
 
 
 Console.CancelKeyPress += (_,_) => File.Delete(dest.FullName);
@@ -23,34 +20,22 @@ using HttpClient client = new HttpClient();
 
 var writerOut = new StreamWriter(destStream);
 
-var readers = new StreamReaderUrl[urls.Length];
 
-for (int i = 0; i < urls.Length; i++)
+var readers = new StreamReader[urls.Length];
+
+await Parallel.ForAsync(0, urls.Length, async (i, cts) =>
 {
-    readers[i] = new StreamReaderUrl(client, urls[i]);
-}
+    readers[i] = new StreamReader(await client.GetStreamAsync(urls[i]));
+});
 
-var isDone = new bool[urls.Length];
-string line;
 
-while (!isDone.All(x => x))
+await Parallel.ForEachAsync(readers, async (reader, cts) =>
 {
-    for (int i = 0; i < urls.Length; i++)
-    {
-        if (isDone[i])
-        {
-            continue;
-        }
-        
-        line = await readers[i].ReadLine();
-        
-        if (line == "null")
-        {
-            isDone[i] = true;
-            continue;
-        }
-        
-        writerOut.WriteLine(line);
-        
-    }
+    await writerOut.WriteAsync(await reader.ReadToEndAsync());
+});
+
+foreach (var reader in readers)
+{
+    reader.Dispose();
 }
+await writerOut.DisposeAsync();
