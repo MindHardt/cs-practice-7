@@ -16,7 +16,7 @@ public static class Input
         {
             Console.Write("Введите нужные URL через пробел: ");
             result = Console.ReadLine()!.Split(' ');
-            valid = result.Any(x => IsValidUri(x) is false);
+            valid = result.All(x => IsValidUri(x));
             if (valid is false)
             {
                 Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
@@ -26,7 +26,11 @@ public static class Input
         return result;
     }
 
-    private static bool IsValidUri(string uri) => uri.StartsWith("https://");
+    private static bool IsValidUri(string uri)
+    {
+        return Uri.TryCreate(uri, UriKind.Absolute, out var uriResult)
+               && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+    }
     
     
     /// <summary>
@@ -40,6 +44,18 @@ public static class Input
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
+
+                if (file.Exists)
+                {
+                    Console.Write("файл уже существует. Перезаписать? (y/n): ");
+                    var answer = Console.ReadLine()?.ToLower();
+                    if (answer != "y" && answer != "yes")
+                    {
+                        Console.WriteLine("попробуйте указать другой путь");
+                        continue;
+                    }
+                }
+
                 return file;
             }
             catch

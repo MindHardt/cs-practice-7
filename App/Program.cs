@@ -1,17 +1,68 @@
 ﻿using App;
+using System.Collections.Concurrent;
 
 var cts = new CancellationTokenSource();
-Console.CancelKeyPress += (_, _) => cts.Cancel();
-
-var uris = Input.GetUris();
-var dest = Input.GetOutputFile();
-var destStream = dest.OpenWrite();
-
-await Parallel.ForEachAsync(uris, cts.Token, async (uri, ct) =>
+var dest = (FileInfo?)null;
+Console.CancelKeyPress += (_, e) =>
 {
-    using var http = new HttpClient();
-    await using var content = await http.GetStreamAsync(uri, ct);
-    await content.CopyToAsync(destStream, ct);
-});
+    e.Cancel = true;
+    cts.Cancel();
+    if (dest?.Exists == true)
+    {
+        try
+        {
+            dest.Delete();
+            Console.WriteLine("\nФайл удален.");
+        }
+        catch
+        {
+            Console.WriteLine("\nНе удалось удалить файл.");
+        }
+    }
+};
+try
+{
+    var uris = Input.GetUris();
+    dest = Input.GetOutputFile();
 
-await destStream.DisposeAsync();
+    var lineQueue = new ConcurrentQueue<string>();
+    var totalLines = 0;
+    var writeLock = new SemaphoreSlim(1, 1);
+    await using var destStream = dest.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+    await using var writer = new StreamWriter(destStream);
+    var tasks = uris.Select(async uri =>
+    {
+        try
+        {
+            using var http = new HttpClient();
+            await using var stream = await http.GetStreamAsync(uri, cts.Token);
+            using var reader = new StreamReader(stream);
+
+            while (await reader.ReadLineAsync(cts.Token) is { } line)
+            {
+                await writeLock.WaitAsync(cts.Token);
+                try
+                {
+                    await writer.WriteLineAsync(line);
+                    totalLines++;
+                }
+                finally
+                {
+                    writeLock.Release();
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Console.WriteLine($"Ошибка при чтении {uri}: {ex.Message}");
+        }
+    });
+
+    await Task.WhenAll(tasks);
+
+    Console.WriteLine($"\nВсего строк записано: {totalLines}");
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("\nОперация отменена.");
+}
