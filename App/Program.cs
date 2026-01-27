@@ -29,6 +29,10 @@ await using (var destStream = dest.OpenWrite())
                 await using var content = await http.GetStreamAsync(uri, ct);
                 await content.CopyToAsync(destStream, ct);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
             finally
             {
                 semaphore.Release();
