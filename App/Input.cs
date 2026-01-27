@@ -16,7 +16,7 @@ public static class Input
         {
             Console.Write("Введите нужные URL через пробел: ");
             result = Console.ReadLine()!.Split(' ');
-            valid = result.Any(x => IsValidUri(x) is false);
+            valid = result.All(IsValidUri);
             if (valid is false)
             {
                 Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
@@ -26,7 +26,12 @@ public static class Input
         return result;
     }
 
-    private static bool IsValidUri(string uri) => uri.StartsWith("https://");
+    private static bool IsValidUri(string uri)
+    {
+        return Uri.TryCreate(uri, UriKind.Absolute, out var createdUri)
+               && (createdUri.Scheme == Uri.UriSchemeHttp || createdUri.Scheme == Uri.UriSchemeHttps);
+    }
+
     
     
     /// <summary>
@@ -40,11 +45,36 @@ public static class Input
             try
             {
                 var file = new FileInfo(Console.ReadLine()!);
-                return file;
+                if (file.Exists)
+                {
+                    Console.WriteLine("Файл уже существует, хотите его перезаписать? (Y/N):");
+                    while (true)
+                    {
+                        ConsoleKeyInfo key = Console.ReadKey();
+                    
+                        switch (key.Key)
+                        {
+                            case ConsoleKey.Y:
+                                Console.Clear();
+                                return file;
+                            case ConsoleKey.N:
+                                break;
+                            default:
+                                Console.WriteLine("Введите Y или N");
+                                continue;
+                        }
+                        break;
+                    }
+                }
+                else
+                {
+                    Console.Clear();
+                    return file;
+                }
             }
             catch
             {
-                Console.WriteLine("Произошла ошибка, вероятно вы ввели некорректный путь. Попробуйте ещё раз.");
+                Console.WriteLine("Вы ввели некорректный путь или отказались от перезаписи файла. Попробуйте ещё раз.");
             }
         }
     }
