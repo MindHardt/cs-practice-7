@@ -16,7 +16,7 @@ public static class Input
         {
             Console.Write("Введите нужные URL через пробел: ");
             result = Console.ReadLine()!.Split(' ');
-            valid = result.Any(x => IsValidUri(x) is false);
+            valid = !result.Any(x => IsValidUri(x) is false);
             if (valid is false)
             {
                 Console.WriteLine("Ошибка! Вы ввели некорректные URL!");
@@ -26,7 +26,30 @@ public static class Input
         return result;
     }
 
-    private static bool IsValidUri(string uri) => uri.StartsWith("https://");
+    private static bool IsValidUri(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out _);
+
+    private static bool IsValidPath(string path)
+    {
+        try
+        {
+            using (var file = File.Create(path))
+            {
+            }
+
+            File.Delete(path);
+            return true;
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            Console.WriteLine("Указана неправильная директория");
+            return false;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            return false;
+        }
+}
     
     
     /// <summary>
@@ -34,17 +57,38 @@ public static class Input
     /// </summary>
     public static FileInfo GetOutputFile()
     {
+        FileInfo file;
         while (true)
         {
             Console.Write("Введите путь до файла с результатом: ");
+            file = new FileInfo(Console.ReadLine()!);
             try
             {
-                var file = new FileInfo(Console.ReadLine()!);
+                if (file.Exists)
+                {
+                    Console.WriteLine("Файл с таким названием уже существует. Хотите его перезаписать? [y/n]");
+                    var input = Console.ReadKey(true);
+                    if (char.ToLowerInvariant(input.KeyChar) == 'y')
+                    {
+                        File.Delete(file.FullName);
+                        return file;
+                    }
+
+                    Console.WriteLine("Вы отказались от перезаписи, вернемся в начало");
+                    continue;
+                }
+
+                if (IsValidPath(file.FullName) is false)
+                {
+                    Console.WriteLine("Путь к файлу некорректен");
+                    continue;
+                }
+
                 return file;
             }
-            catch
+            catch(Exception e)
             {
-                Console.WriteLine("Произошла ошибка, вероятно вы ввели некорректный путь. Попробуйте ещё раз.");
+                Console.WriteLine($"Произошла ошибка {file.FullName}: {e.Message}");
             }
         }
     }
